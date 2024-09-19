@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
-export async function POST(request: Request) {
+export async function POST() {
   console.log("開始！");
   
   // 既存のPDFファイルを読み込む

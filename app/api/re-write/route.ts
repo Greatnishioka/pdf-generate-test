@@ -3,15 +3,15 @@ import { NextResponse } from 'next/server';
 import fs from 'fs'; 
 import path from 'path'; 
 
-const fontkit = require('fontkit');  // 修正ポイント: requireでfontkitをインポート
+const fontkit = require('fontkit');  // requireでfontkitをインポート(eslintに引っかかる形なので要修正？)
 
 export async function POST() { 
   console.log("開始！"); 
    
-  // 既存のPDFファイルを読み込む 
+  // 既存のPDFファイルとフォントを読み込む(フォントをWebフォントにできる？←必要であれば要検証) 
   const pdfPath = path.resolve('./public/A4分割PDF.pdf'); // publicフォルダに置く 
   const fontPath = path.resolve('./public/NotoSansJP-Medium.ttf'); // publicフォルダに置く 
-  console.log("pdf読み込み！"); 
+  console.log("pdf・フォント存在確認OK！"); 
    
   let existingPdfBytes; 
   let fontBytes; 
@@ -19,51 +19,55 @@ export async function POST() {
   try { 
     existingPdfBytes = fs.readFileSync(pdfPath); 
     fontBytes = fs.readFileSync(fontPath); 
-    console.log("pdf関係OK！"); 
+    console.log("pdf・フォント関係の読み込みOK！"); 
   } catch (error) { 
     console.error("PDF読み込みエラー:", error); 
     return NextResponse.json({ message: 'PDF読み込みエラー' }, { status: 500 }); 
   } 
 
-  // PDFドキュメントをロードする 
+  // PDFのロード 
   const pdfDoc = await PDFDocument.load(existingPdfBytes); 
-  pdfDoc.registerFontkit(fontkit);  // 修正ポイント
 
+  // fontkit読み込み←なんか日本語フォント使う場合は必須っぽいけど、結構クセ者な感じする。
+  pdfDoc.registerFontkit(fontkit);  
+
+  //ここでフォント使用可能にしてる
   const customFont = await pdfDoc.embedFont(fontBytes); 
 
-  // ページを取得 
+  // ページ取得 
   const pages = pdfDoc.getPages(); 
-  console.log(pages.length + "ページ取得完了！"); 
+  console.log(pages.length + "ページ取得完了OK！"); 
   const firstPage = pages[0]; 
-  const { width, height } = firstPage.getSize(); 
-  console.log(`Page size: width=${width}, height=${height}`); 
+
+  //↓pdfのサイズ
+  //width=841.89, height=595.276
 
   // ページにテキストを書き込む 
   firstPage.drawText('Hello, World!', { 
     x: 320, 
-    y: height - 100, 
+    y: 500, 
     size: 15, 
     color: rgb(0, 0, 1), 
-    font: customFont,  // 修正ポイント
+    font: customFont,  // これ指定しないとフォントはデフォルト(日本語非対応)のものが使われてしまう
   }); 
   firstPage.drawText('西岡', { 
     x: 600, 
-    y: height - 170, 
+    y: 420, 
     size: 15, 
     color: rgb(0, 0, 1), 
-    font: customFont,  // 修正ポイント
+    font: customFont,  
   }); 
-  console.log("テキスト書き込み完了！"); 
+  console.log("テキスト書き込みOK！"); 
 
   // 新しいPDFとして書き出す 
   const pdfBytes = await pdfDoc.save(); 
-  console.log("pdf書き出し完了！"); 
+  console.log("pdf書き出しOK！"); 
 
   // 新しいPDFをクライアントに返す 
   return new NextResponse(pdfBytes, { 
     headers: { 
       'Content-Type': 'application/pdf', 
-      'Content-Disposition': 'attachment; filename=newfile.pdf', // これにより、ファイルがダウンロードされます 
+      'Content-Disposition': 'attachment; filename=newfile.pdf', // これでファイルがダウンロードできる
     }, 
   }); 
 }

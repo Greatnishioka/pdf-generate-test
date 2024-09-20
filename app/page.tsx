@@ -7,12 +7,13 @@ export default function Home() {
 
   // フォーム送信ハンドラ
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();  // ページリロードを防ぐ
+    e.preventDefault();  // ページリロード防ぐ
 
     try {
-      console.log("page.tsx開始！");
+      console.log("page.tsxの方のスクリプト稼動開始！");
 
-      const res = await fetch('/api/re-write', {
+      //
+      const res = await fetch('/api/re-write', {  
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -22,19 +23,21 @@ export default function Home() {
 
       console.log("page.tsx設定OK！");
 
+      //404とかroute.tsが無い場合とかにエラー
       if (!res.ok) {
         throw new Error(`サーバーエラー: ${res.statusText}`);
       }
 
+      //pdfの中身(バイナリデータ)
       const blob = await res.blob();
 
       // PDFファイルをダウンロードさせる
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'output.pdf'; // ダウンロードするファイル名
+      a.download = 'output.pdf'; // ダウンロードするファイル名(バイナリデータをpdfにしてる)
       document.body.appendChild(a); // ダウンロードリンクを一時的に追加
-      a.click(); // ダウンロードを自動的に開始
+      a.click(); // ダウンロードリンクを強制クリック
       a.remove(); // リンクを削除
 
       setResponseMessage('PDFのダウンロードが完了しました！');
@@ -47,12 +50,11 @@ export default function Home() {
   return ( 
     <main className="w-full h-screen flex justify-center items-center"> 
       <div className="w-[375px] h-full flex justify-center items-center flex-col"> 
-        {/* フォームに onSubmit を追加 */}
-        <form method='POST' onSubmit={handleSubmit} className="bg-slate-500 w-80 h-24 rounded-md text-white flex justify-center items-center"> 
-          {/* input type="submit" に変更 */}
+        
+        <form method='POST' onSubmit={handleSubmit} className="bg-slate-500 w-80 h-24 rounded-md text-white flex justify-center items-center active:bg-black"> 
           <input type="submit" value="PDF発行！" className=" text-white font-bold py-2 px-4 rounded" /> 
         </form> 
-        {/* レスポンスメッセージを表示する */}
+        {/* ここでメッセが返ってきてる場合表示 */}
         {responseMessage && <p>{responseMessage}</p>}
       </div> 
     </main> 
